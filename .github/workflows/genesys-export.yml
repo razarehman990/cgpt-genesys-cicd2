@@ -13,7 +13,7 @@ jobs:
       # OAuth credentials for Prod Org
       PROD_GENESYSCLOUD_OAUTHCLIENT_ID:     ${{ secrets.PROD_GENESYSCLOUD_OAUTHCLIENT_ID }}
       PROD_GENESYSCLOUD_OAUTHCLIENT_SECRET: ${{ secrets.PROD_GENESYSCLOUD_OAUTHCLIENT_SECRET }}
-      # Single region values for both Terraform and Archy
+      # Shared region values (for both Terraform and Archy)
       GENESYSCLOUD_TERRAFORM_REGION: ${{ secrets.GENESYSCLOUD_TERRAFORM_REGION }}   # e.g. "ca-central-1"
       GENESYSCLOUD_ARCHY_LOCATION:   ${{ secrets.GENESYSCLOUD_ARCHY_LOCATION }}     # e.g. "cac1.pure.cloud"
     permissions:
@@ -45,6 +45,8 @@ jobs:
         working-directory: genesys-export-dev
         env:
           TF_VAR_aws_region: ${{ env.GENESYSCLOUD_TERRAFORM_REGION }}
+          GENESYSCLOUD_OAUTHCLIENT_ID: ${{ secrets.DEV_GENESYSCLOUD_OAUTHCLIENT_ID }}
+          GENESYSCLOUD_OAUTHCLIENT_SECRET: ${{ secrets.DEV_GENESYSCLOUD_OAUTHCLIENT_SECRET }}
         run: |
           terraform init
           terraform apply -auto-approve
@@ -53,6 +55,8 @@ jobs:
         working-directory: genesys-export-prod
         env:
           TF_VAR_aws_region: ${{ env.GENESYSCLOUD_TERRAFORM_REGION }}
+          GENESYSCLOUD_OAUTHCLIENT_ID: ${{ secrets.PROD_GENESYSCLOUD_OAUTHCLIENT_ID }}
+          GENESYSCLOUD_OAUTHCLIENT_SECRET: ${{ secrets.PROD_GENESYSCLOUD_OAUTHCLIENT_SECRET }}
         run: |
           terraform init
           terraform apply -auto-approve
