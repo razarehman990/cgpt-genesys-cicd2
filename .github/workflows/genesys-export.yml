@@ -7,19 +7,17 @@ jobs:
   export:
     runs-on: ubuntu-latest
     env:
-      # Dev Org secrets
+      # OAuth credentials for Dev Org
       DEV_GENESYSCLOUD_OAUTHCLIENT_ID:     ${{ secrets.DEV_GENESYSCLOUD_OAUTHCLIENT_ID }}
       DEV_GENESYSCLOUD_OAUTHCLIENT_SECRET: ${{ secrets.DEV_GENESYSCLOUD_OAUTHCLIENT_SECRET }}
-      DEV_GENESYSCLOUD_TERRAFORM_REGION:    ${{ secrets.GENESYSCLOUD_TERRAFORM_REGION }}  # e.g. "ca-central-1"
-      DEV_GENESYSCLOUD_ARCHY_LOCATION:      ${{ secrets.GENESYSCLOUD_ARCHY_LOCATION }}       # e.g. "cac1.pure.cloud"
-
-      # Prod Org secrets
+      # OAuth credentials for Prod Org
       PROD_GENESYSCLOUD_OAUTHCLIENT_ID:     ${{ secrets.PROD_GENESYSCLOUD_OAUTHCLIENT_ID }}
       PROD_GENESYSCLOUD_OAUTHCLIENT_SECRET: ${{ secrets.PROD_GENESYSCLOUD_OAUTHCLIENT_SECRET }}
-      PROD_GENESYSCLOUD_TERRAFORM_REGION:    ${{ secrets.GENESYSCLOUD_TERRAFORM_REGION }}  # e.g. "us-east-1"
-      PROD_GENESYSCLOUD_ARCHY_LOCATION:      ${{ secrets.GENESYSCLOUD_ARCHY_LOCATION }}       # e.g. "mypurecloud.com"
+      # Single region values for both Terraform and Archy
+      GENESYSCLOUD_TERRAFORM_REGION: ${{ secrets.GENESYSCLOUD_TERRAFORM_REGION }}   # e.g. "ca-central-1"
+      GENESYSCLOUD_ARCHY_LOCATION:   ${{ secrets.GENESYSCLOUD_ARCHY_LOCATION }}     # e.g. "cac1.pure.cloud"
     permissions:
-      contents: write
+      contents: write   # Allow pushing changes back to the repository
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -70,8 +68,7 @@ jobs:
 
           mkdir -p flows/dev
 
-          # Export Architect flows for Dev Org
-          # Update these commands with your actual flow names and types.
+          # Export Architect flows for Dev Org (update flow names/types as needed)
           archy export --flowName "Rukshan Test" --flowType inboundcall --exportType yaml --outputDir flows/dev --force --optionsFile archy_options_dev.yaml
 
       - name: Export Prod Architect Flows
@@ -85,8 +82,7 @@ jobs:
 
           mkdir -p flows/prod
 
-          # Export Architect flows for Prod Org
-          # Update these commands with your actual flow names and types.
+          # Export Architect flows for Prod Org (update flow names/types as needed)
           archy export --flowName "Rukshan Test" --flowType inboundcall --exportType yaml --outputDir flows/prod --force --optionsFile archy_options_prod.yaml
 
       - name: Configure git identity
