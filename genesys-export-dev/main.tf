@@ -17,11 +17,11 @@ provider "genesyscloud" {
 }
 
 resource "genesyscloud_tf_export" "full_export" {
-  directory                    = "../export/dev"  # Exports to export/dev folder
-  include_filter_resources     = []               # Empty list exports all supported resource types
-  export_as_hcl                = true             # Export in human-readable HCL
-  include_state_file           = false            # Exclude the state file for portability
-  split_files_by_resource      = false            # Set to true to split files per resource
-  enable_dependency_resolution = true             # Include dependencies automatically
-  log_permission_errors        = true             # Log permission errors rather than failing
+  directory                    = "../export/dev"  # Export files to export/dev folder
+  include_filter_resources     = []               # Empty list means export all supported resources
+  export_as_hcl                = true             # Export in human-readable HCL format
+  include_state_file           = false            # Do not include the state file
+  split_files_by_resource      = false            # Set to true if you prefer separate files per resource
+  enable_dependency_resolution = true             # Automatically include resource dependencies
+  log_permission_errors        = true             # Log permission errors instead of failing
 }
