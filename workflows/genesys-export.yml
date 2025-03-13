@@ -1,0 +1,103 @@
+name: Initial Export - Genesys Cloud Config (Dev & Prod)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    env:
+      # Dev Org secrets
+      DEV_GENESYSCLOUD_OAUTHCLIENT_ID:     ${{ secrets.DEV_GENESYSCLOUD_OAUTHCLIENT_ID }}
+      DEV_GENESYSCLOUD_OAUTHCLIENT_SECRET: ${{ secrets.DEV_GENESYSCLOUD_OAUTHCLIENT_SECRET }}
+      DEV_GENESYSCLOUD_TERRAFORM_REGION:    ${{ secrets.GENESYSCLOUD_TERRAFORM_REGION }}  # e.g. "ca-central-1"
+      DEV_GENESYSCLOUD_ARCHY_LOCATION:      ${{ secrets.GENESYSCLOUD_ARCHY_LOCATION }}       # e.g. "cac1.pure.cloud"
+
+      # Prod Org secrets
+      PROD_GENESYSCLOUD_OAUTHCLIENT_ID:     ${{ secrets.PROD_GENESYSCLOUD_OAUTHCLIENT_ID }}
+      PROD_GENESYSCLOUD_OAUTHCLIENT_SECRET: ${{ secrets.PROD_GENESYSCLOUD_OAUTHCLIENT_SECRET }}
+      PROD_GENESYSCLOUD_TERRAFORM_REGION:    ${{ secrets.GENESYSCLOUD_TERRAFORM_REGION }}  # e.g. "us-east-1"
+      PROD_GENESYSCLOUD_ARCHY_LOCATION:      ${{ secrets.GENESYSCLOUD_ARCHY_LOCATION }}       # e.g. "mypurecloud.com"
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.6
+
+      - name: Install Archy CLI
+        uses: stsmdt/setup-genesyscloud-archy@v1
+        with:
+          archy-version: 2.33.1
+
+      - name: Clean old export files
+        run: |
+          rm -rf export/dev/*
+          rm -rf export/prod/*
+          rm -rf flows/dev/*
+          rm -rf flows/prod/*
+
+      - name: Terraform Export Dev Org
+        working-directory: genesys-export-dev
+        env:
+          TF_VAR_aws_region: ${{ env.GENESYSCLOUD_TERRAFORM_REGION }}
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Terraform Export Prod Org
+        working-directory: genesys-export-prod
+        env:
+          TF_VAR_aws_region: ${{ env.GENESYSCLOUD_TERRAFORM_REGION }}
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Export Dev Architect Flows
+        run: |
+          # Create Archy options file for Dev Org
+          cat > archy_options_dev.yaml <<EOF
+          clientId: ${DEV_GENESYSCLOUD_OAUTHCLIENT_ID}
+          clientSecret: ${DEV_GENESYSCLOUD_OAUTHCLIENT_SECRET}
+          location: ${GENESYSCLOUD_ARCHY_LOCATION}
+          EOF
+
+          mkdir -p flows/dev
+
+          # Export Architect flows for Dev Org
+          # Update these commands with your actual flow names and types.
+          archy export --flowName "Rukshan Test" --flowType inboundcall --exportType yaml --outputDir flows/dev --force --optionsFile archy_options_dev.yaml
+
+      - name: Export Prod Architect Flows
+        run: |
+          # Create Archy options file for Prod Org
+          cat > archy_options_prod.yaml <<EOF
+          clientId: ${PROD_GENESYSCLOUD_OAUTHCLIENT_ID}
+          clientSecret: ${PROD_GENESYSCLOUD_OAUTHCLIENT_SECRET}
+          location: ${GENESYSCLOUD_ARCHY_LOCATION}
+          EOF
+
+          mkdir -p flows/prod
+
+          # Export Architect flows for Prod Org
+          # Update these commands with your actual flow names and types.
+          archy export --flowName "Rukshan Test" --flowType inboundcall --exportType yaml --outputDir flows/prod --force --optionsFile archy_options_prod.yaml
+
+      - name: Configure git identity
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Commit changes
+        run: |
+          git add export/ flows/
+          git commit -m "Initial Export - Genesys Cloud backup $(date '+%Y-%m-%d %H:%M:%S')" || echo "Nothing to commit"
+
+      - name: Push changes to repository
+        run: git push
